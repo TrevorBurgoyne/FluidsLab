@@ -1,5 +1,5 @@
 %% Turbulence Profiles
-% Trevor Burgoyne 4 Oct 2022
+% Trevor Burgoyne 16 Oct 2022
 
 % Paths for data loading
 ROOT_DIR = "C:/Users/Trevor/Desktop/AEM 4602W/Fluids Lab/Fluids Lab Data/";
@@ -8,22 +8,47 @@ ANGLES = ["-5", "00", "05", "20"];
 N_DATAPOINTS = [11, 10, 15, 78];
 V_AVG = 24.4247; % m/s, mean of all velocities, excluding nan
 
+% Useful Conversions
+LB_TO_N = 4.448; % lb -> N = (lb) * 4.448 N/lb
+N_TO_LB = 1/LB_TO_N;
+DEG_TO_RAD = pi/180; % degrees -> rad = (deg)* pi/180 rad/deg
+IN_TO_M = 0.0254; % in -> m = (in) * .0254 m/in
+
+% Base Uncertainties
+F_ERR   =   0.1; % ± N, given error in sting measurements
+A_ERR   =   0.2; % ± degrees, given error in sting measurements
+C_ERR   = 0.001; % ± m, bias error from using a meter stick
+B_ERR   = 0.001; % ± m, bias error from using a meter stick
+V_ERR   =   0.4; % ± m/s, given error in pitot tube measurements
+Y_ERR   =  1/16; % ± in, bias error from reading hotwire tape measure
+X_ERR   =  1/16; % ± in, bias error from reading hotwire tape measure 
+L_ERR   =  1/16; % ± in, bias error from reading hotwire tape measure
+RHO_ERR =  0.02; % *100 ± % of value, given error in pitot tube measurements
+MU_ERR  =  0.01; % *100 ± % of value, given error in pitot tube measurements
+V_RMS_ERR = 0.2; % ± m/s, from calibration spreadsheet
+
+F_ERR_LB  = F_ERR * N_TO_LB; % lb
+A_ERR_RAD = A_ERR * DEG_TO_RAD; % rad
+Y_ERR_M   = Y_ERR * IN_TO_M; % m
+X_ERR_M   = X_ERR * IN_TO_M; % m
+L_ERR_M   = L_ERR * IN_TO_M; % m
+
+
 % Arrays to store data per angle
 angle_data_arr = repmat(...
     struct(...
         "len_scale",[],...
         "v_normalized", [],...
-        "v_rms", []...
+        "v_rms", [],...
+        "len_scale_ERR",[],...
+        "v_normalized_ERR",[]...
     ), length(ANGLES), 1 ... 
 );
 
-% in -> m = (in) * .0254 m/in
-IN_TO_M = 0.0254;
-
 % Experiment properties
-c =  .254; % m +/- .005m, airfoil chord length
-x = .75*c; % m +/- .005m, distance from trailing edge to hotwire
-L = 19.5*IN_TO_M; % m +/- 1/32in, distance from hotwire to top of tunnel
+c =  .254; % m, airfoil chord length
+x = .75*c; % m, distance from trailing edge to hotwire
+L = 19.5*IN_TO_M; % m, distance from hotwire to top of tunnel
 
 % Calibration constants: (E+offset)^2 = A + B*U^n
 offset = -8.92; % V, voltage at zero flow
@@ -37,16 +62,22 @@ for i = 1:length(ANGLES)
    angle_data_arr(i) = struct(...
       "len_scale", zeros(1, N_DATAPOINTS(i)),...
       "v_normalized", zeros(1, N_DATAPOINTS(i)),...
-      "v_rms", zeros(1,N_DATAPOINTS(i))...
+      "v_rms", zeros(1,N_DATAPOINTS(i)),...
+      "len_scale_ERR", zeros(1,N_DATAPOINTS(i)),...
+      "v_normalized_ERR", zeros(1,N_DATAPOINTS(i))...
    );
    
-   L0 = L - (x)*sind(str2double(angle)); % m, height of LE adjusted for angle of attack
+   a = str2double(angle); % deg
+   L0 = L - x*sind(a); % m, height of TE adjusted for angle of attack
+   L0_ERR = sqrt( (-x*sind(a)*L_ERR_M)^2 + ( (L-sind(a))*X_ERR_M )^2 + ( (L-x*cosd(a))*A_ERR_RAD )^2 ); % ± m
+   
    for j = 1:N_DATAPOINTS(i)
       path = HOTWIRE_DIR + "a_" + ANGLES(i) + "/data_" + j + ".mat";
       data = load(path); % lab data, with P, rho, v, a, y, and V_arr
       
       % len_scale = (L0 - y) / L0
       len_scale = (L0 - (data.y * IN_TO_M)) / L0;
+      len_scale_ERR = sqrt( ( (data.y*IN_TO_M*L0_ERR)/(L0^2) )^2 + (-Y_ERR_M/L0)^2 ); % unitless
       
       % hotwire velocity
       % from calibration: v_hotwire = (((E + offset)^2 - A)/B)^(1/n)
@@ -55,6 +86,7 @@ for i = 1:length(ANGLES)
       % v_rms = remove mean from velocities, take the average of their
       % squares, and then take the square root
       v_rms = sqrt( mean( ( v_hotwire_arr - mean(v_hotwire_arr) ).^2 ) );
+      v_rms = v_rms / data.v; % normalized to be non-dimensional
       
       % v_hotwire / v_freestream
       % NOTE: for some reason, the pitot tube returned a speed of 'nan' for
@@ -66,29 +98,55 @@ for i = 1:length(ANGLES)
           data.v = V_AVG;
       end
       v_normalized = mean(v_hotwire_arr) / data.v;
-      
+      v_normalized_ERR = sqrt( (V_RMS_ERR/data.v)^2 + ( (-V_ERR*mean(v_hotwire_arr))/(data.v^2) )^2  ); % unitless
        
        % Store in global arr
        angle_data_arr(i).len_scale(j) = len_scale;
+       angle_data_arr(i).len_scale_ERR(j) = len_scale_ERR;
        angle_data_arr(i).v_normalized(j) = v_normalized;
+       angle_data_arr(i).v_normalized_ERR(j) = v_normalized_ERR;
        angle_data_arr(i).v_rms(j) = v_rms;
    end
 end
 
 
-%% Graph
+%% V/Vinf
 
 colors = ["green", "red", "blue", "black"];
 shapes = ["-o", "-*", "-x", "-^"];
 
 hold on
 for i = 1:length(ANGLES)
-    plot(angle_data_arr(i).v_normalized, angle_data_arr(i).len_scale, shapes(i), 'MarkerFaceColor', colors(i))
+    errorbar(angle_data_arr(i).v_normalized, angle_data_arr(i).len_scale,...
+        angle_data_arr(i).len_scale_ERR,... % yneg
+        angle_data_arr(i).len_scale_ERR,... % ypos
+        angle_data_arr(i).v_normalized_ERR,... % xneg
+        angle_data_arr(i).v_normalized_ERR,... % xpos
+        shapes(i), 'MarkerFaceColor', colors(i)...
+   )
 end
-xlabel("v / vinf")
+xlabel("V / Vinf")
 ylabel("y / Lo")
 xlim([.3, 1])
 legend('a=-5', 'a=0', 'a=5', "a=20", 'AutoUpdate', 'off', 'Location', 'northwest')
+
+%% Vrms/Vinf
+colors = ["green", "red", "blue", "black"];
+shapes = ["-o", "-*", "-x", "-^"];
+
+hold on
+for i = 1:length(ANGLES)
+    errorbar(angle_data_arr(i).v_rms, angle_data_arr(i).len_scale,...
+        angle_data_arr(i).len_scale_ERR,... % yneg
+        angle_data_arr(i).len_scale_ERR,... % ypos
+        angle_data_arr(i).v_normalized_ERR,... % xneg
+        angle_data_arr(i).v_normalized_ERR,... % xpos
+        shapes(i), 'MarkerFaceColor', colors(i)...
+   )
+end
+xlabel("Vrms / Vinf")
+ylabel("y / Lo")
+legend('a=-5', 'a=0', 'a=5', "a=20", 'AutoUpdate', 'off', 'Location', 'northeast')
 
 
 
