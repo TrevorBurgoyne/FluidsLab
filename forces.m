@@ -4,7 +4,7 @@
 % Paths for data loading
 ROOT_DIR = "C:/Users/Trevor/Desktop/AEM 4602W/Fluids Lab/Fluids Lab Data/";
 FORCE_DIR = ROOT_DIR + "Force Measurements/";
-ANGLES = ["-5", "00", "05", "10", "12", "14", "15", "18"];
+ANGLES = ["-5", "00", "05", "10", "12", "14", "15", "18", "20"];
 
 % Useful Conversions
 LB_TO_N = 4.448; % lb -> N = (lb) * 4.448 N/lb
@@ -17,7 +17,7 @@ A_ERR   =   0.2; % ± degrees, given error in sting measurements
 C_ERR   = 0.001; % ± m, bias error from using a meter stick
 B_ERR   = 0.001; % ± m, bias error from using a meter stick
 V_ERR   =   0.4; % ± m/s, given error in pitot tube measurements
-Y_ERR   =  1/16; % ± in, bias error from reading hotwire tape measure
+Y_ERR   =  1/16; % ± in, bias error from reading hot wire tape measure
 RHO_ERR =  0.02; % *100 ± % of value, given error in pitot tube measurements
 MU_ERR  =  0.01; % *100 ± % of value, given error in pitot tube measurements
 
@@ -53,7 +53,7 @@ for i = 1:length(ANGLES)
         * LB_TO_N; % ± N
     
     % D = Fa*cos(a) + Fn*sin(a), Drag Force
-    D = -data.Fa*cosd(data.a) + data.Fn*sind(data.a);
+    D = data.Fa*cosd(data.a) + data.Fn*sind(data.a);
     D = D * LB_TO_N;
     D_ERR = sqrt( (-F_ERR_LB*cosd(data.a))^2 + (F_ERR_LB*sind(data.a))^2 +...
         ( (data.Fa*cosd(data.a) + data.Fn*sind(data.a))*A_ERR_RAD )^2 )...

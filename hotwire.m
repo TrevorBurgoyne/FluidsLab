@@ -20,9 +20,9 @@ A_ERR   =   0.2; % ± degrees, given error in sting measurements
 C_ERR   = 0.001; % ± m, bias error from using a meter stick
 B_ERR   = 0.001; % ± m, bias error from using a meter stick
 V_ERR   =   0.4; % ± m/s, given error in pitot tube measurements
-Y_ERR   =  1/16; % ± in, bias error from reading hotwire tape measure
-X_ERR   =  1/16; % ± in, bias error from reading hotwire tape measure 
-L_ERR   =  1/16; % ± in, bias error from reading hotwire tape measure
+Y_ERR   =  1/16; % ± in, bias error from reading hot wire tape measure
+X_ERR   =  1/16; % ± in, bias error from reading hot wire tape measure 
+L_ERR   =  1/16; % ± in, bias error from reading hot wire tape measure
 RHO_ERR =  0.02; % *100 ± % of value, given error in pitot tube measurements
 MU_ERR  =  0.01; % *100 ± % of value, given error in pitot tube measurements
 V_RMS_ERR = 0.2; % ± m/s, from calibration spreadsheet
@@ -47,8 +47,8 @@ angle_data_arr = repmat(...
 
 % Experiment properties
 c =  .254; % m, airfoil chord length
-x = .75*c; % m, distance from trailing edge to hotwire
-L = 19.5*IN_TO_M; % m, distance from hotwire to top of tunnel
+x = .75*c; % m, distance from trailing edge to hot wire
+L = 19.5*IN_TO_M; % m, distance from hot wire to top of tunnel
 
 % Calibration constants: (E+offset)^2 = A + B*U^n
 offset = -8.92; % V, voltage at zero flow
@@ -75,11 +75,20 @@ for i = 1:length(ANGLES)
       path = HOTWIRE_DIR + "a_" + ANGLES(i) + "/data_" + j + ".mat";
       data = load(path); % lab data, with P, rho, v, a, y, and V_arr
       
+      % NOTE: for some reason, the pitot tube returned a speed of 'nan' for
+      % all of our measurements at a = 0. This isn't a huge deal, since the
+      % freestream was always set to the same speed, so a good
+      % approximation for this case is to use the average of all other
+      % velocities we measured
+      if(isnan(data.v))
+          data.v = V_AVG;
+      end
+      
       % len_scale = (L0 - y) / L0
       len_scale = (L0 - (data.y * IN_TO_M)) / L0;
       len_scale_ERR = sqrt( ( (data.y*IN_TO_M*L0_ERR)/(L0^2) )^2 + (-Y_ERR_M/L0)^2 ); % unitless
       
-      % hotwire velocity
+      % hot wire velocity
       % from calibration: v_hotwire = (((E + offset)^2 - A)/B)^(1/n)
       v_hotwire_arr = (((data.V_arr + offset).^2 - A)./B).^(1/n);
       
@@ -89,14 +98,6 @@ for i = 1:length(ANGLES)
       v_rms = v_rms / data.v; % normalized to be non-dimensional
       
       % v_hotwire / v_freestream
-      % NOTE: for some reason, the pitot tube returned a speed of 'nan' for
-      % all of our measurements at a = 0. This isn't a huge deal, since the
-      % freestream was always set to the same speed, so a good
-      % approximation for this case is to use the average of all other
-      % velocities we measured
-      if(isnan(data.v))
-          data.v = V_AVG;
-      end
       v_normalized = mean(v_hotwire_arr) / data.v;
       v_normalized_ERR = sqrt( (V_RMS_ERR/data.v)^2 + ( (-V_ERR*mean(v_hotwire_arr))/(data.v^2) )^2  ); % unitless
        
@@ -136,13 +137,14 @@ shapes = ["-o", "-*", "-x", "-^"];
 
 hold on
 for i = 1:length(ANGLES)
-    errorbar(angle_data_arr(i).v_rms, angle_data_arr(i).len_scale,...
-        angle_data_arr(i).len_scale_ERR,... % yneg
-        angle_data_arr(i).len_scale_ERR,... % ypos
-        angle_data_arr(i).v_normalized_ERR,... % xneg
-        angle_data_arr(i).v_normalized_ERR,... % xpos
-        shapes(i), 'MarkerFaceColor', colors(i)...
-   )
+%     errorbar(angle_data_arr(i).v_rms, angle_data_arr(i).len_scale,...
+%         angle_data_arr(i).len_scale_ERR,... % yneg
+%         angle_data_arr(i).len_scale_ERR,... % ypos
+%         angle_data_arr(i).v_normalized_ERR,... % xneg
+%         angle_data_arr(i).v_normalized_ERR,... % xpos
+%         shapes(i), 'MarkerFaceColor', colors(i)...
+%    )
+    errorbar(angle_data_arr(i).v_rms, angle_data_arr(i).len_scale, angle_data_arr(i).len_scale_ERR, shapes(i), 'MarkerFaceColor', colors(i))
 end
 xlabel("Vrms / Vinf")
 ylabel("y / Lo")
