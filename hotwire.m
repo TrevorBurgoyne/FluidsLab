@@ -6,7 +6,11 @@ ROOT_DIR = "C:/Users/Trevor/Desktop/AEM 4602W/Fluids Lab/Fluids Lab Data/";
 HOTWIRE_DIR = ROOT_DIR + "Hotwire Measurements/";
 ANGLES = ["-5", "00", "05", "20"];
 N_DATAPOINTS = [11, 10, 15, 78];
-V_AVG = 24.4247; % m/s, mean of all velocities, excluding nan
+V_AVG   = 24.4247; % m/s, mean of all velocities, excluding nan
+T_AVG   = 27.8641; % degrees C, mean of all temperatures
+P_AVG   =   98769; % Pa, mean of all pressures, excluding nan
+RHO_AVG =  1.1430; % kg/m^3, mean of all densities, excluding nan
+MU_AVG  = 1.85e-5; % Pa*s, dynamic viscosity at T_AVG and ~atm pressure. Src: https://www.engineeringtoolbox.com/air-absolute-kinematic-viscosity-d_601.html
 
 % Useful Conversions
 LB_TO_N = 4.448; % lb -> N = (lb) * 4.448 N/lb
@@ -23,8 +27,9 @@ V_ERR   =   0.4; % ± m/s, given error in pitot tube measurements
 Y_ERR   =  1/16; % ± in, bias error from reading hot wire tape measure
 X_ERR   =  1/16; % ± in, bias error from reading hot wire tape measure 
 L_ERR   =  1/16; % ± in, bias error from reading hot wire tape measure
-RHO_ERR =  0.02; % *100 ± % of value, given error in pitot tube measurements
-MU_ERR  =  0.01; % *100 ± % of value, given error in pitot tube measurements
+
+RHO_ERR =  0.02*RHO_AVG; % *100 ± % of value, given error in pitot tube measurements
+MU_ERR  =  0.01*MU_AVG; % *100 ± % of value, given error in pitot tube measurements
 V_RMS_ERR = 0.2; % ± m/s, from calibration spreadsheet
 
 F_ERR_LB  = F_ERR * N_TO_LB; % lb
@@ -32,7 +37,6 @@ A_ERR_RAD = A_ERR * DEG_TO_RAD; % rad
 Y_ERR_M   = Y_ERR * IN_TO_M; % m
 X_ERR_M   = X_ERR * IN_TO_M; % m
 L_ERR_M   = L_ERR * IN_TO_M; % m
-
 
 % Arrays to store data per angle
 angle_data_arr = repmat(...
@@ -56,6 +60,13 @@ A      = -74.9; % constant from linear regression
 B      =  53.7; % constant from linear regression
 n      =  0.55; % exponent in King's Law that gave straightest fit
 
+% Average Experiment Reynolds Number
+Re_AVG = (RHO_AVG*V_AVG*c)/MU_AVG
+Re_ERR = sqrt(...
+    ( (RHO_ERR*V_AVG*c)/MU_AVG )^2 + ( (RHO_AVG*V_ERR*c)/MU_AVG )^2 + ...
+    + ( (RHO_AVG*V_AVG*C_ERR)/MU_AVG )^2 + ( (-RHO_AVG*V_AVG*c*MU_ERR)/(MU_AVG^2) )^2 ...
+)
+
 
 for i = 1:length(ANGLES)
    angle = ANGLES(i);
@@ -73,7 +84,7 @@ for i = 1:length(ANGLES)
    
    for j = 1:N_DATAPOINTS(i)
       path = HOTWIRE_DIR + "a_" + ANGLES(i) + "/data_" + j + ".mat";
-      data = load(path); % lab data, with P, rho, v, a, y, and V_arr
+      data = load(path); % lab data, with P, T, rho, v, a, y, and V_arr
       
       % NOTE: for some reason, the pitot tube returned a speed of 'nan' for
       % all of our measurements at a = 0. This isn't a huge deal, since the
