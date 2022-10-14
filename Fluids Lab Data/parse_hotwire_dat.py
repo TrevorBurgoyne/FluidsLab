@@ -40,7 +40,8 @@ KEYS = {
     "Density": "rho",
     "Fixed Pitot Probe Speed": "v",
     "AOA": "a",
-    "User comment": "y"
+    "User comment": "y",
+    "Temperature": "T",
 }
 
 def main():
