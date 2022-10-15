@@ -1,0 +1,240 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>forces</title><meta name="generator" content="MATLAB 9.9"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2022-10-14"><meta name="DC.source" content="forces.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#1">CL, CD vs alpha</a></li><li><a href="#2">CL vs Angle of Attack</a></li><li><a href="#3">CD vs Angle of Attack</a></li></ul></div><h2 id="1">CL, CD vs alpha</h2><p>Trevor Burgoyne 16 Oct 2022</p><pre class="codeinput"><span class="comment">% Paths for data loading</span>
+ROOT_DIR = <span class="string">"C:/Users/Trevor/Desktop/AEM 4602W/Fluids Lab/Fluids Lab Data/"</span>;
+FORCE_DIR = ROOT_DIR + <span class="string">"Force Measurements/"</span>;
+ANGLES = [<span class="string">"-5"</span>, <span class="string">"00"</span>, <span class="string">"05"</span>, <span class="string">"10"</span>, <span class="string">"12"</span>, <span class="string">"14"</span>, <span class="string">"15"</span>, <span class="string">"18"</span>, <span class="string">"20"</span>];
+
+<span class="comment">% Useful Conversions</span>
+LB_TO_N = 4.448; <span class="comment">% lb -&gt; N = (lb) * 4.448 N/lb</span>
+N_TO_LB = 1/LB_TO_N;
+DEG_TO_RAD = pi/180; <span class="comment">% degrees -&gt; rad = (deg)* pi/180 rad/deg</span>
+
+<span class="comment">% Base Uncertainties</span>
+F_ERR   =   0.1; <span class="comment">% &plusmn; N, given error in sting measurements</span>
+A_ERR   =   0.2; <span class="comment">% &plusmn; degrees, given error in sting measurements</span>
+C_ERR   = 0.001; <span class="comment">% &plusmn; m, bias error from using a meter stick</span>
+B_ERR   = 0.001; <span class="comment">% &plusmn; m, bias error from using a meter stick</span>
+V_ERR   =   0.4; <span class="comment">% &plusmn; m/s, given error in pitot tube measurements</span>
+Y_ERR   =  1/16; <span class="comment">% &plusmn; in, bias error from reading hot wire tape measure</span>
+RHO_ERR =  0.02; <span class="comment">% *100 &plusmn; % of value, given error in pitot tube measurements</span>
+MU_ERR  =  0.01; <span class="comment">% *100 &plusmn; % of value, given error in pitot tube measurements</span>
+
+F_ERR_LB  = F_ERR * N_TO_LB; <span class="comment">% lb</span>
+A_ERR_RAD = A_ERR * DEG_TO_RAD; <span class="comment">% rad</span>
+
+<span class="comment">% Arrays to store CD, CL, and a</span>
+CL_arr     = zeros(1, length(ANGLES));
+CD_arr     = zeros(1, length(ANGLES));
+a_arr      = zeros(1, length(ANGLES));
+CL_ERR_arr = zeros(1, length(ANGLES));
+CD_ERR_arr = zeros(1, length(ANGLES));
+
+<span class="comment">% Airfoil properties</span>
+c = .254; <span class="comment">% m +/- .005m, chord length</span>
+b = .670; <span class="comment">% m +/- .005m, wing span</span>
+S =  b*c; <span class="comment">% m^2, approx. wing area</span>
+S_ERR = sqrt( (c*B_ERR)^2 + (b*C_ERR)^2 ); <span class="comment">% &plusmn; m^2</span>
+
+<span class="keyword">for</span> i = 1:length(ANGLES)
+    path = FORCE_DIR + <span class="string">"force_mes_a_"</span> + ANGLES(i) + <span class="string">".mat"</span>;
+    data = load(path); <span class="comment">% lab data, with P, rho, v, Fn, Fa, a</span>
+
+    <span class="comment">% q  = .5*rho*v^2, dynamic pressure</span>
+    q = .5 * data.rho * data.v^2;
+    Q_ERR = sqrt( (.5 * RHO_ERR * data.v^2)^2 + (data.rho*data.v*V_ERR)^2 );
+
+    <span class="comment">% L  = -Fa*sin(a) + Fn*cos(a), Lift Force</span>
+    L = -data.Fa*sind(data.a) + data.Fn*cosd(data.a);
+    L = L * LB_TO_N;
+    L_ERR = sqrt( (-F_ERR_LB*sind(data.a))^2 + (F_ERR_LB*cosd(data.a))^2 +<span class="keyword">...</span>
+        ( (-data.Fa*cosd(data.a) - data.Fn*sind(data.a))*A_ERR_RAD )^2 )<span class="keyword">...</span>
+        * LB_TO_N; <span class="comment">% &plusmn; N</span>
+
+    <span class="comment">% D = Fa*cos(a) + Fn*sin(a), Drag Force</span>
+    D = data.Fa*cosd(data.a) + data.Fn*sind(data.a);
+    D = D * LB_TO_N;
+    D_ERR = sqrt( (-F_ERR_LB*cosd(data.a))^2 + (F_ERR_LB*sind(data.a))^2 +<span class="keyword">...</span>
+        ( (data.Fa*cosd(data.a) + data.Fn*sind(data.a))*A_ERR_RAD )^2 )<span class="keyword">...</span>
+        * LB_TO_N; <span class="comment">% &plusmn; N</span>
+
+    <span class="comment">% CL = L / q*S, coefficient of lift</span>
+    CL = L / (q*S);
+    CL_ERR = sqrt( (L_ERR/(q*S))^2 + ( (-Q_ERR*L)/(S*q^2) )^2 + ( (-S_ERR*L)/(q*S^2) )^2 ); <span class="comment">% unitless</span>
+
+    <span class="comment">% CD = D / (q*S), coefficient of drag</span>
+    CD = D / (q*S);
+    CD_ERR = sqrt( (D_ERR/(q*S))^2 + ( (-Q_ERR*D)/(S*q^2) )^2 + ( (-S_ERR*D)/(q*S^2) )^2 ); <span class="comment">% unitless</span>
+
+    <span class="comment">% Store in arrays for graphing</span>
+    CL_arr(i) = CL;
+    CD_arr(i) = CD;
+    a_arr(i)  = data.a;
+    CL_ERR_arr(i) = CL_ERR;
+    CD_ERR_arr(i) = CD_ERR;
+<span class="keyword">end</span>
+</pre><h2 id="2">CL vs Angle of Attack</h2><pre class="codeinput">errorbar(a_arr, CL_arr, CL_ERR_arr, <span class="string">"-o"</span>)
+xlabel(<span class="string">"Angle of Attack (deg)"</span>)
+ylabel(<span class="string">"CL"</span>)
+</pre><img vspace="5" hspace="5" src="forces_01.png" alt=""> <h2 id="3">CD vs Angle of Attack</h2><pre class="codeinput">errorbar(a_arr, CD_arr, CD_ERR_arr, <span class="string">"-o"</span>)
+xlabel(<span class="string">"Angle of Attack (deg)"</span>)
+ylabel(<span class="string">"CD"</span>)
+</pre><img vspace="5" hspace="5" src="forces_02.png" alt=""> <p class="footer"><br><a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2020b</a><br></p></div><!--
+##### SOURCE BEGIN #####
+%% CL, CD vs alpha
+% Trevor Burgoyne 16 Oct 2022
+
+% Paths for data loading
+ROOT_DIR = "C:/Users/Trevor/Desktop/AEM 4602W/Fluids Lab/Fluids Lab Data/";
+FORCE_DIR = ROOT_DIR + "Force Measurements/";
+ANGLES = ["-5", "00", "05", "10", "12", "14", "15", "18", "20"];
+
+% Useful Conversions
+LB_TO_N = 4.448; % lb -> N = (lb) * 4.448 N/lb
+N_TO_LB = 1/LB_TO_N;
+DEG_TO_RAD = pi/180; % degrees -> rad = (deg)* pi/180 rad/deg
+
+% Base Uncertainties
+F_ERR   =   0.1; % ± N, given error in sting measurements
+A_ERR   =   0.2; % ± degrees, given error in sting measurements
+C_ERR   = 0.001; % ± m, bias error from using a meter stick
+B_ERR   = 0.001; % ± m, bias error from using a meter stick
+V_ERR   =   0.4; % ± m/s, given error in pitot tube measurements
+Y_ERR   =  1/16; % ± in, bias error from reading hot wire tape measure
+RHO_ERR =  0.02; % *100 ± % of value, given error in pitot tube measurements
+MU_ERR  =  0.01; % *100 ± % of value, given error in pitot tube measurements
+
+F_ERR_LB  = F_ERR * N_TO_LB; % lb
+A_ERR_RAD = A_ERR * DEG_TO_RAD; % rad
+
+% Arrays to store CD, CL, and a
+CL_arr     = zeros(1, length(ANGLES));
+CD_arr     = zeros(1, length(ANGLES));
+a_arr      = zeros(1, length(ANGLES));
+CL_ERR_arr = zeros(1, length(ANGLES));
+CD_ERR_arr = zeros(1, length(ANGLES));
+
+% Airfoil properties
+c = .254; % m +/- .005m, chord length
+b = .670; % m +/- .005m, wing span
+S =  b*c; % m^2, approx. wing area
+S_ERR = sqrt( (c*B_ERR)^2 + (b*C_ERR)^2 ); % ± m^2
+
+for i = 1:length(ANGLES)
+    path = FORCE_DIR + "force_mes_a_" + ANGLES(i) + ".mat";
+    data = load(path); % lab data, with P, rho, v, Fn, Fa, a
+    
+    % q  = .5*rho*v^2, dynamic pressure
+    q = .5 * data.rho * data.v^2;
+    Q_ERR = sqrt( (.5 * RHO_ERR * data.v^2)^2 + (data.rho*data.v*V_ERR)^2 );
+    
+    % L  = -Fa*sin(a) + Fn*cos(a), Lift Force
+    L = -data.Fa*sind(data.a) + data.Fn*cosd(data.a);
+    L = L * LB_TO_N;
+    L_ERR = sqrt( (-F_ERR_LB*sind(data.a))^2 + (F_ERR_LB*cosd(data.a))^2 +...
+        ( (-data.Fa*cosd(data.a) - data.Fn*sind(data.a))*A_ERR_RAD )^2 )...
+        * LB_TO_N; % ± N
+    
+    % D = Fa*cos(a) + Fn*sin(a), Drag Force
+    D = data.Fa*cosd(data.a) + data.Fn*sind(data.a);
+    D = D * LB_TO_N;
+    D_ERR = sqrt( (-F_ERR_LB*cosd(data.a))^2 + (F_ERR_LB*sind(data.a))^2 +...
+        ( (data.Fa*cosd(data.a) + data.Fn*sind(data.a))*A_ERR_RAD )^2 )...
+        * LB_TO_N; % ± N
+    
+    % CL = L / q*S, coefficient of lift
+    CL = L / (q*S);
+    CL_ERR = sqrt( (L_ERR/(q*S))^2 + ( (-Q_ERR*L)/(S*q^2) )^2 + ( (-S_ERR*L)/(q*S^2) )^2 ); % unitless
+    
+    % CD = D / (q*S), coefficient of drag
+    CD = D / (q*S);
+    CD_ERR = sqrt( (D_ERR/(q*S))^2 + ( (-Q_ERR*D)/(S*q^2) )^2 + ( (-S_ERR*D)/(q*S^2) )^2 ); % unitless
+    
+    % Store in arrays for graphing
+    CL_arr(i) = CL;
+    CD_arr(i) = CD;
+    a_arr(i)  = data.a;
+    CL_ERR_arr(i) = CL_ERR;
+    CD_ERR_arr(i) = CD_ERR;
+end
+
+%% CL vs Angle of Attack
+errorbar(a_arr, CL_arr, CL_ERR_arr, "-o")
+xlabel("Angle of Attack (deg)")
+ylabel("CL")
+
+%% CD vs Angle of Attack
+errorbar(a_arr, CD_arr, CD_ERR_arr, "-o")
+xlabel("Angle of Attack (deg)")
+ylabel("CD")
+
+
+##### SOURCE END #####
+--></body></html>

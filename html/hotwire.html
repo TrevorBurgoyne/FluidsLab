@@ -1,0 +1,427 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>hotwire</title><meta name="generator" content="MATLAB 9.9"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2022-10-14"><meta name="DC.source" content="hotwire.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#1">Turbulence Profiles</a></li><li><a href="#2">V/Vinf</a></li><li><a href="#3">Vrms/Vinf</a></li></ul></div><h2 id="1">Turbulence Profiles</h2><p>Trevor Burgoyne 16 Oct 2022</p><pre class="codeinput"><span class="comment">% Paths for data loading</span>
+ROOT_DIR = <span class="string">"C:/Users/Trevor/Desktop/AEM 4602W/Fluids Lab/Fluids Lab Data/"</span>;
+HOTWIRE_DIR = ROOT_DIR + <span class="string">"Hotwire Measurements/"</span>;
+ANGLES = [<span class="string">"-5"</span>, <span class="string">"00"</span>, <span class="string">"05"</span>, <span class="string">"20"</span>];
+N_DATAPOINTS = [11, 10, 15, 78];
+V_AVG   = 24.4247; <span class="comment">% m/s, mean of all velocities, excluding nan</span>
+T_AVG   = 27.8641; <span class="comment">% degrees C, mean of all temperatures</span>
+P_AVG   =   98769; <span class="comment">% Pa, mean of all pressures, excluding nan</span>
+RHO_AVG =  1.1430; <span class="comment">% kg/m^3, mean of all densities, excluding nan</span>
+MU_AVG  = 1.85e-5; <span class="comment">% Pa*s, dynamic viscosity at T_AVG and ~atm pressure. Src: https://www.engineeringtoolbox.com/air-absolute-kinematic-viscosity-d_601.html</span>
+
+<span class="comment">% Useful Conversions</span>
+LB_TO_N = 4.448; <span class="comment">% lb -&gt; N = (lb) * 4.448 N/lb</span>
+N_TO_LB = 1/LB_TO_N;
+DEG_TO_RAD = pi/180; <span class="comment">% degrees -&gt; rad = (deg)* pi/180 rad/deg</span>
+IN_TO_M = 0.0254; <span class="comment">% in -&gt; m = (in) * .0254 m/in</span>
+
+<span class="comment">% Base Uncertainties</span>
+F_ERR   =   0.1; <span class="comment">% &plusmn; N, given error in sting measurements</span>
+A_ERR   =   0.2; <span class="comment">% &plusmn; degrees, given error in sting measurements</span>
+C_ERR   = 0.001; <span class="comment">% &plusmn; m, bias error from using a meter stick</span>
+B_ERR   = 0.001; <span class="comment">% &plusmn; m, bias error from using a meter stick</span>
+V_ERR   =   0.4; <span class="comment">% &plusmn; m/s, given error in pitot tube measurements</span>
+Y_ERR   =  1/16; <span class="comment">% &plusmn; in, bias error from reading hot wire tape measure</span>
+X_ERR   =  1/16; <span class="comment">% &plusmn; in, bias error from reading hot wire tape measure</span>
+L_ERR   =  1/16; <span class="comment">% &plusmn; in, bias error from reading hot wire tape measure</span>
+
+RHO_ERR =  0.02*RHO_AVG; <span class="comment">% *100 &plusmn; % of value, given error in pitot tube measurements</span>
+MU_ERR  =  0.01*MU_AVG; <span class="comment">% *100 &plusmn; % of value, given error in pitot tube measurements</span>
+V_RMS_ERR = 0.2; <span class="comment">% &plusmn; m/s, from calibration spreadsheet</span>
+
+F_ERR_LB  = F_ERR * N_TO_LB; <span class="comment">% lb</span>
+A_ERR_RAD = A_ERR * DEG_TO_RAD; <span class="comment">% rad</span>
+Y_ERR_M   = Y_ERR * IN_TO_M; <span class="comment">% m</span>
+X_ERR_M   = X_ERR * IN_TO_M; <span class="comment">% m</span>
+L_ERR_M   = L_ERR * IN_TO_M; <span class="comment">% m</span>
+
+<span class="comment">% Arrays to store data per angle</span>
+angle_data_arr = repmat(<span class="keyword">...</span>
+    struct(<span class="keyword">...</span>
+        <span class="string">"len_scale"</span>,[],<span class="keyword">...</span>
+        <span class="string">"v_normalized"</span>, [],<span class="keyword">...</span>
+        <span class="string">"v_rms"</span>, [],<span class="keyword">...</span>
+        <span class="string">"len_scale_ERR"</span>,[],<span class="keyword">...</span>
+        <span class="string">"v_normalized_ERR"</span>,[]<span class="keyword">...</span>
+    ), length(ANGLES), 1 <span class="keyword">...</span>
+);
+
+<span class="comment">% Experiment properties</span>
+c =  .254; <span class="comment">% m, airfoil chord length</span>
+x = .75*c; <span class="comment">% m, distance from trailing edge to hot wire</span>
+L = 19.5*IN_TO_M; <span class="comment">% m, distance from hot wire to top of tunnel</span>
+
+<span class="comment">% Calibration constants: (E+offset)^2 = A + B*U^n</span>
+offset = -8.92; <span class="comment">% V, voltage at zero flow</span>
+A      = -74.9; <span class="comment">% constant from linear regression</span>
+B      =  53.7; <span class="comment">% constant from linear regression</span>
+n      =  0.55; <span class="comment">% exponent in King's Law that gave straightest fit</span>
+
+<span class="comment">% Average Experiment Reynolds Number</span>
+Re_AVG = (RHO_AVG*V_AVG*c)/MU_AVG
+Re_ERR = sqrt(<span class="keyword">...</span>
+    ( (RHO_ERR*V_AVG*c)/MU_AVG )^2 + ( (RHO_AVG*V_ERR*c)/MU_AVG )^2 + <span class="keyword">...</span>
+    + ( (RHO_AVG*V_AVG*C_ERR)/MU_AVG )^2 + ( (-RHO_AVG*V_AVG*c*MU_ERR)/(MU_AVG^2) )^2 <span class="keyword">...</span>
+)
+
+
+<span class="keyword">for</span> i = 1:length(ANGLES)
+   angle = ANGLES(i);
+   angle_data_arr(i) = struct(<span class="keyword">...</span>
+      <span class="string">"len_scale"</span>, zeros(1, N_DATAPOINTS(i)),<span class="keyword">...</span>
+      <span class="string">"v_normalized"</span>, zeros(1, N_DATAPOINTS(i)),<span class="keyword">...</span>
+      <span class="string">"v_rms"</span>, zeros(1,N_DATAPOINTS(i)),<span class="keyword">...</span>
+      <span class="string">"len_scale_ERR"</span>, zeros(1,N_DATAPOINTS(i)),<span class="keyword">...</span>
+      <span class="string">"v_normalized_ERR"</span>, zeros(1,N_DATAPOINTS(i))<span class="keyword">...</span>
+   );
+
+   <span class="comment">% LENGTH SCALE: the hot wire was positioned at x = .75c behind the</span>
+   <span class="comment">% trailing edge of the airfoil, with the airfoil being L = 19.5in from</span>
+   <span class="comment">% the top of the tunnel, as measured at zero angle of attack.</span>
+   <span class="comment">% However, since moving the sting caused a change in the vertical</span>
+   <span class="comment">% position of the TE, L0 was selected to be the distance from the top of</span>
+   <span class="comment">% the tunnel to the airfoil, adjusted for angle of attack. Using trig,</span>
+   <span class="comment">% this works out to be L - x*sin(a).</span>
+   a = str2double(angle); <span class="comment">% deg</span>
+   L0 = L - x*sind(a); <span class="comment">% m, height of TE adjusted for angle of attack</span>
+   L0_ERR = sqrt( (-x*sind(a)*L_ERR_M)^2 + ( (L-sind(a))*X_ERR_M )^2 + ( (L-x*cosd(a))*A_ERR_RAD )^2 ); <span class="comment">% &plusmn; m</span>
+
+   <span class="keyword">for</span> j = 1:N_DATAPOINTS(i)
+      path = HOTWIRE_DIR + <span class="string">"a_"</span> + ANGLES(i) + <span class="string">"/data_"</span> + j + <span class="string">".mat"</span>;
+      data = load(path); <span class="comment">% lab data, with P, T, rho, v, a, y, and V_arr</span>
+
+      <span class="comment">% NOTE: for some reason, the pitot tube returned a speed of 'nan' for</span>
+      <span class="comment">% all of our measurements at a = 0. This isn't a huge deal, since the</span>
+      <span class="comment">% freestream was always set to the same speed, so a good</span>
+      <span class="comment">% approximation for this case is to use the average of all other</span>
+      <span class="comment">% velocities we measured</span>
+      <span class="keyword">if</span>(isnan(data.v))
+          data.v = V_AVG;
+      <span class="keyword">end</span>
+
+
+      <span class="comment">% NOTE: y as measured in the lab is the distance from the top of the</span>
+      <span class="comment">% tunnel to the hot wire. L0, as discussed earlier, is the distance</span>
+      <span class="comment">% from the top of the tunnel to the TE, adjusted for angle of attack.</span>
+      <span class="comment">% To make values of y *above* the TE to be positive and *below* to be</span>
+      <span class="comment">% negative, y was subtracted from L0 to transfrom y into the distance</span>
+      <span class="comment">% of the hotwire above the TE. This was then nondimensionalized by L0</span>
+
+      <span class="comment">% len_scale = (L0 - y) / L0</span>
+      len_scale = (L0 - (data.y * IN_TO_M)) / L0;
+      len_scale_ERR = sqrt( ( (data.y*IN_TO_M*L0_ERR)/(L0^2) )^2 + (-Y_ERR_M/L0)^2 ); <span class="comment">% unitless</span>
+
+      <span class="comment">% hot wire velocity</span>
+      <span class="comment">% from calibration: v_hotwire = (((E + offset)^2 - A)/B)^(1/n)</span>
+      v_hotwire_arr = (((data.V_arr + offset).^2 - A)./B).^(1/n);
+
+      <span class="comment">% v_rms = remove mean from velocities, take the average of their</span>
+      <span class="comment">% squares, and then take the square root</span>
+      v_rms = sqrt( mean( ( v_hotwire_arr - mean(v_hotwire_arr) ).^2 ) );
+      v_rms = v_rms / data.v; <span class="comment">% normalized to be non-dimensional</span>
+
+      <span class="comment">% v_hotwire / v_freestream</span>
+      v_normalized = mean(v_hotwire_arr) / data.v;
+      v_normalized_ERR = sqrt( (V_RMS_ERR/data.v)^2 + ( (-V_ERR*mean(v_hotwire_arr))/(data.v^2) )^2  ); <span class="comment">% unitless</span>
+
+       <span class="comment">% Store in global arr</span>
+       angle_data_arr(i).len_scale(j) = len_scale;
+       angle_data_arr(i).len_scale_ERR(j) = len_scale_ERR;
+       angle_data_arr(i).v_normalized(j) = v_normalized;
+       angle_data_arr(i).v_normalized_ERR(j) = v_normalized_ERR;
+       angle_data_arr(i).v_rms(j) = v_rms;
+   <span class="keyword">end</span>
+<span class="keyword">end</span>
+</pre><pre class="codeoutput">
+Re_AVG =
+
+   3.8330e+05
+
+
+Re_ERR =
+
+   1.0730e+04
+
+</pre><h2 id="2">V/Vinf</h2><pre class="codeinput">colors = [<span class="string">"green"</span>, <span class="string">"red"</span>, <span class="string">"blue"</span>, <span class="string">"black"</span>];
+shapes = [<span class="string">"-o"</span>, <span class="string">"-*"</span>, <span class="string">"-x"</span>, <span class="string">"-^"</span>];
+
+hold <span class="string">on</span>
+<span class="keyword">for</span> i = 1:length(ANGLES)
+    errorbar(angle_data_arr(i).v_normalized, angle_data_arr(i).len_scale,<span class="keyword">...</span>
+        angle_data_arr(i).len_scale_ERR,<span class="keyword">...</span><span class="comment"> % yneg</span>
+        angle_data_arr(i).len_scale_ERR,<span class="keyword">...</span><span class="comment"> % ypos</span>
+        angle_data_arr(i).v_normalized_ERR,<span class="keyword">...</span><span class="comment"> % xneg</span>
+        angle_data_arr(i).v_normalized_ERR,<span class="keyword">...</span><span class="comment"> % xpos</span>
+        shapes(i), <span class="string">'MarkerFaceColor'</span>, colors(i)<span class="keyword">...</span>
+   )
+<span class="keyword">end</span>
+xlabel(<span class="string">"V / Vinf"</span>)
+ylabel(<span class="string">"y / Lo"</span>)
+xlim([.3, 1])
+legend(<span class="string">'a=-5'</span>, <span class="string">'a=0'</span>, <span class="string">'a=5'</span>, <span class="string">"a=20"</span>, <span class="string">'AutoUpdate'</span>, <span class="string">'off'</span>, <span class="string">'Location'</span>, <span class="string">'northwest'</span>)
+</pre><img vspace="5" hspace="5" src="hotwire_01.png" alt=""> <h2 id="3">Vrms/Vinf</h2><pre class="codeinput">colors = [<span class="string">"green"</span>, <span class="string">"red"</span>, <span class="string">"blue"</span>, <span class="string">"black"</span>];
+shapes = [<span class="string">"-o"</span>, <span class="string">"-*"</span>, <span class="string">"-x"</span>, <span class="string">"-^"</span>];
+
+clf <span class="comment">% clear previous figure</span>
+hold <span class="string">on</span>
+<span class="keyword">for</span> i = 1:length(ANGLES)
+    errorbar(angle_data_arr(i).v_rms, angle_data_arr(i).len_scale, angle_data_arr(i).len_scale_ERR, shapes(i), <span class="string">'MarkerFaceColor'</span>, colors(i))
+<span class="keyword">end</span>
+xlabel(<span class="string">"Vrms / Vinf"</span>)
+ylabel(<span class="string">"y / Lo"</span>)
+legend(<span class="string">'a=-5'</span>, <span class="string">'a=0'</span>, <span class="string">'a=5'</span>, <span class="string">"a=20"</span>, <span class="string">'AutoUpdate'</span>, <span class="string">'off'</span>, <span class="string">'Location'</span>, <span class="string">'northeast'</span>)
+</pre><img vspace="5" hspace="5" src="hotwire_02.png" alt=""> <p class="footer"><br><a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2020b</a><br></p></div><!--
+##### SOURCE BEGIN #####
+%% Turbulence Profiles
+% Trevor Burgoyne 16 Oct 2022
+
+% Paths for data loading
+ROOT_DIR = "C:/Users/Trevor/Desktop/AEM 4602W/Fluids Lab/Fluids Lab Data/";
+HOTWIRE_DIR = ROOT_DIR + "Hotwire Measurements/";
+ANGLES = ["-5", "00", "05", "20"];
+N_DATAPOINTS = [11, 10, 15, 78];
+V_AVG   = 24.4247; % m/s, mean of all velocities, excluding nan
+T_AVG   = 27.8641; % degrees C, mean of all temperatures
+P_AVG   =   98769; % Pa, mean of all pressures, excluding nan
+RHO_AVG =  1.1430; % kg/m^3, mean of all densities, excluding nan
+MU_AVG  = 1.85e-5; % Pa*s, dynamic viscosity at T_AVG and ~atm pressure. Src: https://www.engineeringtoolbox.com/air-absolute-kinematic-viscosity-d_601.html
+
+% Useful Conversions
+LB_TO_N = 4.448; % lb -> N = (lb) * 4.448 N/lb
+N_TO_LB = 1/LB_TO_N;
+DEG_TO_RAD = pi/180; % degrees -> rad = (deg)* pi/180 rad/deg
+IN_TO_M = 0.0254; % in -> m = (in) * .0254 m/in
+
+% Base Uncertainties
+F_ERR   =   0.1; % ± N, given error in sting measurements
+A_ERR   =   0.2; % ± degrees, given error in sting measurements
+C_ERR   = 0.001; % ± m, bias error from using a meter stick
+B_ERR   = 0.001; % ± m, bias error from using a meter stick
+V_ERR   =   0.4; % ± m/s, given error in pitot tube measurements
+Y_ERR   =  1/16; % ± in, bias error from reading hot wire tape measure
+X_ERR   =  1/16; % ± in, bias error from reading hot wire tape measure 
+L_ERR   =  1/16; % ± in, bias error from reading hot wire tape measure
+
+RHO_ERR =  0.02*RHO_AVG; % *100 ± % of value, given error in pitot tube measurements
+MU_ERR  =  0.01*MU_AVG; % *100 ± % of value, given error in pitot tube measurements
+V_RMS_ERR = 0.2; % ± m/s, from calibration spreadsheet
+
+F_ERR_LB  = F_ERR * N_TO_LB; % lb
+A_ERR_RAD = A_ERR * DEG_TO_RAD; % rad
+Y_ERR_M   = Y_ERR * IN_TO_M; % m
+X_ERR_M   = X_ERR * IN_TO_M; % m
+L_ERR_M   = L_ERR * IN_TO_M; % m
+
+% Arrays to store data per angle
+angle_data_arr = repmat(...
+    struct(...
+        "len_scale",[],...
+        "v_normalized", [],...
+        "v_rms", [],...
+        "len_scale_ERR",[],...
+        "v_normalized_ERR",[]...
+    ), length(ANGLES), 1 ... 
+);
+
+% Experiment properties
+c =  .254; % m, airfoil chord length
+x = .75*c; % m, distance from trailing edge to hot wire
+L = 19.5*IN_TO_M; % m, distance from hot wire to top of tunnel
+
+% Calibration constants: (E+offset)^2 = A + B*U^n
+offset = -8.92; % V, voltage at zero flow
+A      = -74.9; % constant from linear regression
+B      =  53.7; % constant from linear regression
+n      =  0.55; % exponent in King's Law that gave straightest fit
+
+% Average Experiment Reynolds Number
+Re_AVG = (RHO_AVG*V_AVG*c)/MU_AVG
+Re_ERR = sqrt(...
+    ( (RHO_ERR*V_AVG*c)/MU_AVG )^2 + ( (RHO_AVG*V_ERR*c)/MU_AVG )^2 + ...
+    + ( (RHO_AVG*V_AVG*C_ERR)/MU_AVG )^2 + ( (-RHO_AVG*V_AVG*c*MU_ERR)/(MU_AVG^2) )^2 ...
+)
+
+
+for i = 1:length(ANGLES)
+   angle = ANGLES(i);
+   angle_data_arr(i) = struct(...
+      "len_scale", zeros(1, N_DATAPOINTS(i)),...
+      "v_normalized", zeros(1, N_DATAPOINTS(i)),...
+      "v_rms", zeros(1,N_DATAPOINTS(i)),...
+      "len_scale_ERR", zeros(1,N_DATAPOINTS(i)),...
+      "v_normalized_ERR", zeros(1,N_DATAPOINTS(i))...
+   );
+   
+   % LENGTH SCALE: the hot wire was positioned at x = .75c behind the
+   % trailing edge of the airfoil, with the airfoil being L = 19.5in from
+   % the top of the tunnel, as measured at zero angle of attack.
+   % However, since moving the sting caused a change in the vertical
+   % position of the TE, L0 was selected to be the distance from the top of
+   % the tunnel to the airfoil, adjusted for angle of attack. Using trig,
+   % this works out to be L - x*sin(a).
+   a = str2double(angle); % deg
+   L0 = L - x*sind(a); % m, height of TE adjusted for angle of attack
+   L0_ERR = sqrt( (-x*sind(a)*L_ERR_M)^2 + ( (L-sind(a))*X_ERR_M )^2 + ( (L-x*cosd(a))*A_ERR_RAD )^2 ); % ± m
+   
+   for j = 1:N_DATAPOINTS(i)
+      path = HOTWIRE_DIR + "a_" + ANGLES(i) + "/data_" + j + ".mat";
+      data = load(path); % lab data, with P, T, rho, v, a, y, and V_arr
+      
+      % NOTE: for some reason, the pitot tube returned a speed of 'nan' for
+      % all of our measurements at a = 0. This isn't a huge deal, since the
+      % freestream was always set to the same speed, so a good
+      % approximation for this case is to use the average of all other
+      % velocities we measured
+      if(isnan(data.v))
+          data.v = V_AVG;
+      end
+      
+      
+      % NOTE: y as measured in the lab is the distance from the top of the
+      % tunnel to the hot wire. L0, as discussed earlier, is the distance
+      % from the top of the tunnel to the TE, adjusted for angle of attack.
+      % To make values of y *above* the TE to be positive and *below* to be
+      % negative, y was subtracted from L0 to transfrom y into the distance
+      % of the hotwire above the TE. This was then nondimensionalized by L0
+      
+      % len_scale = (L0 - y) / L0
+      len_scale = (L0 - (data.y * IN_TO_M)) / L0;
+      len_scale_ERR = sqrt( ( (data.y*IN_TO_M*L0_ERR)/(L0^2) )^2 + (-Y_ERR_M/L0)^2 ); % unitless
+      
+      % hot wire velocity
+      % from calibration: v_hotwire = (((E + offset)^2 - A)/B)^(1/n)
+      v_hotwire_arr = (((data.V_arr + offset).^2 - A)./B).^(1/n);
+      
+      % v_rms = remove mean from velocities, take the average of their
+      % squares, and then take the square root
+      v_rms = sqrt( mean( ( v_hotwire_arr - mean(v_hotwire_arr) ).^2 ) );
+      v_rms = v_rms / data.v; % normalized to be non-dimensional
+      
+      % v_hotwire / v_freestream
+      v_normalized = mean(v_hotwire_arr) / data.v;
+      v_normalized_ERR = sqrt( (V_RMS_ERR/data.v)^2 + ( (-V_ERR*mean(v_hotwire_arr))/(data.v^2) )^2  ); % unitless
+       
+       % Store in global arr
+       angle_data_arr(i).len_scale(j) = len_scale;
+       angle_data_arr(i).len_scale_ERR(j) = len_scale_ERR;
+       angle_data_arr(i).v_normalized(j) = v_normalized;
+       angle_data_arr(i).v_normalized_ERR(j) = v_normalized_ERR;
+       angle_data_arr(i).v_rms(j) = v_rms;
+   end
+end
+
+
+%% V/Vinf
+
+colors = ["green", "red", "blue", "black"];
+shapes = ["-o", "-*", "-x", "-^"];
+
+hold on
+for i = 1:length(ANGLES)
+    errorbar(angle_data_arr(i).v_normalized, angle_data_arr(i).len_scale,...
+        angle_data_arr(i).len_scale_ERR,... % yneg
+        angle_data_arr(i).len_scale_ERR,... % ypos
+        angle_data_arr(i).v_normalized_ERR,... % xneg
+        angle_data_arr(i).v_normalized_ERR,... % xpos
+        shapes(i), 'MarkerFaceColor', colors(i)...
+   )
+end
+xlabel("V / Vinf")
+ylabel("y / Lo")
+xlim([.3, 1])
+legend('a=-5', 'a=0', 'a=5', "a=20", 'AutoUpdate', 'off', 'Location', 'northwest')
+
+%% Vrms/Vinf
+colors = ["green", "red", "blue", "black"];
+shapes = ["-o", "-*", "-x", "-^"];
+
+clf % clear previous figure
+hold on
+for i = 1:length(ANGLES)
+    errorbar(angle_data_arr(i).v_rms, angle_data_arr(i).len_scale, angle_data_arr(i).len_scale_ERR, shapes(i), 'MarkerFaceColor', colors(i))
+end
+xlabel("Vrms / Vinf")
+ylabel("y / Lo")
+legend('a=-5', 'a=0', 'a=5', "a=20", 'AutoUpdate', 'off', 'Location', 'northeast')
+
+
+
+
+
+
+
+
+
+
+
+##### SOURCE END #####
+--></body></html>

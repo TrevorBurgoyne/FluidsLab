@@ -78,6 +78,13 @@ for i = 1:length(ANGLES)
       "v_normalized_ERR", zeros(1,N_DATAPOINTS(i))...
    );
    
+   % LENGTH SCALE: the hot wire was positioned at x = .75c behind the
+   % trailing edge of the airfoil, with the airfoil being L = 19.5in from
+   % the top of the tunnel, as measured at zero angle of attack.
+   % However, since moving the sting caused a change in the vertical
+   % position of the TE, L0 was selected to be the distance from the top of
+   % the tunnel to the airfoil, adjusted for angle of attack. Using trig,
+   % this works out to be L - x*sin(a).
    a = str2double(angle); % deg
    L0 = L - x*sind(a); % m, height of TE adjusted for angle of attack
    L0_ERR = sqrt( (-x*sind(a)*L_ERR_M)^2 + ( (L-sind(a))*X_ERR_M )^2 + ( (L-x*cosd(a))*A_ERR_RAD )^2 ); % ± m
@@ -94,6 +101,14 @@ for i = 1:length(ANGLES)
       if(isnan(data.v))
           data.v = V_AVG;
       end
+      
+      
+      % NOTE: y as measured in the lab is the distance from the top of the
+      % tunnel to the hot wire. L0, as discussed earlier, is the distance
+      % from the top of the tunnel to the TE, adjusted for angle of attack.
+      % To make values of y *above* the TE to be positive and *below* to be
+      % negative, y was subtracted from L0 to transfrom y into the distance
+      % of the hotwire above the TE. This was then nondimensionalized by L0
       
       % len_scale = (L0 - y) / L0
       len_scale = (L0 - (data.y * IN_TO_M)) / L0;
@@ -146,15 +161,9 @@ legend('a=-5', 'a=0', 'a=5', "a=20", 'AutoUpdate', 'off', 'Location', 'northwest
 colors = ["green", "red", "blue", "black"];
 shapes = ["-o", "-*", "-x", "-^"];
 
+clf % clear previous figure
 hold on
 for i = 1:length(ANGLES)
-%     errorbar(angle_data_arr(i).v_rms, angle_data_arr(i).len_scale,...
-%         angle_data_arr(i).len_scale_ERR,... % yneg
-%         angle_data_arr(i).len_scale_ERR,... % ypos
-%         angle_data_arr(i).v_normalized_ERR,... % xneg
-%         angle_data_arr(i).v_normalized_ERR,... % xpos
-%         shapes(i), 'MarkerFaceColor', colors(i)...
-%    )
     errorbar(angle_data_arr(i).v_rms, angle_data_arr(i).len_scale, angle_data_arr(i).len_scale_ERR, shapes(i), 'MarkerFaceColor', colors(i))
 end
 xlabel("Vrms / Vinf")
